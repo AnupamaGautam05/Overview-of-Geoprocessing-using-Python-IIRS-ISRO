@@ -62,10 +62,10 @@ for i in range(1,ds.RasterCount+1):
 band=ds.GetRasterBand(1)
 data=band.ReadAsArray()                                  #stores a band as numpy array data
 print(data)
-plt.figure(figsize=(10,10))
-plt.imshow(data,cmap='gray')
-plt.colorbar()
-plt.show()
+#plt.figure(figsize=(10,10))
+#plt.imshow(data,cmap='gray')
+#plt.colorbar()
+#plt.show()
 
 
 #Plotting all band image: 
@@ -73,10 +73,10 @@ plt.figure(figsize=(30,30))
 for i in range(1,ds.RasterCount+1):                      #Each band show image for different electromagnetic wavelength
     band=ds.GetRasterBand(i)
     data=band.ReadAsArray()
-    plt.subplot(1,3,i)
-    plt.imshow(data,cmap='gray')
-    plt.colorbar()
-    plt.show()
+    #plt.subplot(1,3,i)
+    #plt.imshow(data,cmap='gray')
+    #plt.colorbar()
+    #plt.show()
 
 #----------------------------------------Visualise MultiBand Raster--------------------------------------------------------
     
@@ -92,8 +92,8 @@ for i in range(1,ds.RasterCount+1):                      #Each band show image f
 band=ds.GetRasterBand(1)
 data=band.ReadAsArray(xoff=511,yoff=338,win_xsize=512,win_ysize=512)
 data.shape
-plt.imshow(data,cmap='jet')
-plt.show()
+#plt.imshow(data,cmap='jet')
+#plt.show()
 
 #---------------------------------------Reading Raster Blockwise-----------------------------------------------------------
 
@@ -120,3 +120,58 @@ for x in range(0,x_size,block_size_x):               #Reading columns
 
 print("Outside loop: ",data)
 print(data.shape)
+
+#-------------------------------------------Reading HDF file------------------------------------------------------------------
+hdf_file=r"MOD11A1.A2022191.h20v01.006.2022192094738.hdf"
+ds=gdal.Open(hdf_file)
+sds=ds.GetSubDatasets()
+
+for sd,description in sds:
+    print(description)
+for sd,description in sds:
+    print(sd)
+
+#Now since sds is collection of tuples, so sd[0] will be first tuple and sd[0][0] will be the subdataset of that tuple.
+print(type(sds[0]))                                           #<class 'tuple'>
+print(sds[0])                                                 #('HDF4_EOS:EOS_GRID:"MOD11A1.A2022191.h20v01.006.2022192094738.hdf":MODIS_Grid_Daily_1km_LST:LST_Day_1km', '[1200x1200] LST_Day_1km MODIS_Grid_Daily_1km_LST (16-bit unsigned integer)')
+data=gdal.Open(sds[0][0])                                               #Subdataset read in variable data
+data.GetProjection()                                          #Projected coordinate system
+print(data.GetProjection())
+
+lst_day =data.ReadAsArray()
+plt.figure(figsize=(10,10))
+plt.imshow(lst_day,cmap='hot_r')
+plt.colorbar()
+
+
+lst_night =data.GetRasterBand(1).ReadAsArray()
+plt.figure(figsize=(10,10))
+plt.imshow(lst_night,cmap='hot_r')
+plt.colorbar()
+#plt.show()
+
+pp=pprint.PrettyPrinter(compact=True)
+pp.pprint(data.GetMetadata())
+
+#-------------------------------------------Reading netCDF file------------------------------------------------------------------
+
+nc_file="sresa1b_ncar_ccsm3-example.nc"
+ds=gdal.Open(nc_file)
+pp.pprint(ds.GetMetadata())
+sds=ds.GetSubDatasets()
+
+for sd,description in sds:
+    print(description)
+
+temp_ds=gdal.Open(sds[4][0])
+print(temp_ds.RasterCount)                                  #Number of layers or bands, each layer represent temperature data at different times
+
+temp_data=temp_ds.ReadAsArray()
+temp_data=temp_data-273
+print(type(temp_data))
+
+plt.figure(figsize=(10,10))
+plt.imshow(temp_data,cmap='hot',clim=(5,25))
+plt.colorbar()
+plt.show()
+
